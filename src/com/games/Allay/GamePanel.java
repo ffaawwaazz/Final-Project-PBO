@@ -1,4 +1,3 @@
-
 package com.games.Allay;
 
 import java.awt.*;
@@ -33,6 +32,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private double score;
 
     private Clip clingSound;
+    private Clip backgroundMusic; // Backsound clip
 
     public GamePanel() {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
@@ -51,28 +51,53 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         gameLoop = new Timer(1000 / 60, this);
         gameLoop.start();
+
+        playBackgroundMusic(); // Start the background music
     }
 
     private void loadAssets() {
-    	backgroundImg = new ImageIcon(getClass().getResource("/minecraftbg.png")).getImage();
-    	allayImg = new ImageIcon(getClass().getResource("/Allay.png")).getImage();
-    	topPipeImg = new ImageIcon(getClass().getResource("/toppipe.png")).getImage();
-    	bottomPipeImg = new ImageIcon(getClass().getResource("/bottompipe.png")).getImage();
+        backgroundImg = new ImageIcon(getClass().getResource("/minecraftbg.png")).getImage();
+        allayImg = new ImageIcon(getClass().getResource("/Allay.png")).getImage();
+        topPipeImg = new ImageIcon(getClass().getResource("/toppipe.png")).getImage();
+        bottomPipeImg = new ImageIcon(getClass().getResource("/bottompipe.png")).getImage();
     }
 
     private void loadSound() {
         try {
-            URL soundURL = getClass().getResource("/com/games/Allay/Resource/cling.wav");
+            // Load cling sound
+            URL soundURL = getClass().getResource("/com/games/Allay/cling.wav");
             if (soundURL == null) {
                 System.out.println("Sound file not found!");
-                return;
+            } else {
+                AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundURL);
+                clingSound = AudioSystem.getClip();
+                clingSound.open(audioIn);
             }
 
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundURL);
-            clingSound = AudioSystem.getClip();
-            clingSound.open(audioIn);
+            // Load background music
+            URL bgMusicURL = getClass().getResource("/com/games/Allay/Backsound.wav");
+            if (bgMusicURL == null) {
+                System.out.println("Background music file not found!");
+            } else {
+                AudioInputStream bgAudioIn = AudioSystem.getAudioInputStream(bgMusicURL);
+                backgroundMusic = AudioSystem.getClip();
+                backgroundMusic.open(bgAudioIn);
+            }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void playBackgroundMusic() {
+        if (backgroundMusic != null) {
+            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY); // Loop the music
+            backgroundMusic.start();
+        }
+    }
+
+    private void stopBackgroundMusic() {
+        if (backgroundMusic != null && backgroundMusic.isRunning()) {
+            backgroundMusic.stop();
         }
     }
 
@@ -95,7 +120,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         // Bottom pipe
         pipes.add(new Pipe(boardWidth, randomPipeY + pipeHeight + openingSpace, 64, pipeHeight, bottomPipeImg));
     }
-
 
     @Override
     public void paintComponent(Graphics g) {
@@ -154,6 +178,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         repaint();
 
         if (gameOver) {
+            stopBackgroundMusic();
             placePipeTimer.stop();
             gameLoop.stop();
         }
@@ -172,6 +197,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 score = 0;
                 gameLoop.start();
                 placePipeTimer.start();
+                playBackgroundMusic(); // Restart the background music
             }
         }
     }
@@ -182,4 +208,3 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {}
 }
-
